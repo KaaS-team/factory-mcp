@@ -21,6 +21,14 @@ const EXPECTED = {
   get_task: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
   create_task: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
   hand_off_task: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
+  approve_plan: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+  steer: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+  queue_followup: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+  retry: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+  list_events: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+  spend: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+  list_repos: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+  list_plugins: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
 } as const;
 
 test("lists exactly the registered tools with the right annotations", async () => {
@@ -83,9 +91,25 @@ test("http client sends bearer token and maps routes (fake fetch)", async () => 
   const c = createHttpClient("http://x/", "tok", f);
   await c.listTasks();
   await c.handOffTask({ id: "a/b", to: "z" });
+  await c.approvePlan("r1");
+  await c.steer({ id: "r1", message: "m" });
+  await c.queueFollowup({ id: "r1", message: "m" });
+  await c.retry("r1");
+  await c.listEvents("r1");
+  await c.spend();
+  await c.listRepos();
+  await c.listPlugins();
   assert.deepEqual(seen.map((s) => [s.method, s.url, s.auth]), [
     ["GET", "http://x/tasks", "Bearer tok"],
     ["POST", "http://x/tasks/a%2Fb/hand-off", "Bearer tok"],
+    ["POST", "http://x/runs/r1/approve", "Bearer tok"],
+    ["POST", "http://x/runs/r1/steer", "Bearer tok"],
+    ["POST", "http://x/runs/r1/queue", "Bearer tok"],
+    ["POST", "http://x/runs/r1/retry", "Bearer tok"],
+    ["GET", "http://x/runs/r1/events", "Bearer tok"],
+    ["GET", "http://x/spend", "Bearer tok"],
+    ["GET", "http://x/repos", "Bearer tok"],
+    ["GET", "http://x/plugins", "Bearer tok"],
   ]);
   const bad = createHttpClient("http://x", "t", async () => new Response("", { status: 500 }));
   await assert.rejects(bad.listTasks(), /500/);

@@ -23,5 +23,14 @@ export function createHttpClient(baseUrl: string, token: string, fetchImpl: Fetc
     createTask: (input: CreateTaskInput) => call<Task>("POST", "/tasks", input),
     handOffTask: ({ id, ...rest }: HandOffInput) =>
       call<Task>("POST", `/tasks/${encodeURIComponent(id)}/hand-off`, rest),
+    approvePlan: (id) => call<unknown>("POST", `/runs/${encodeURIComponent(id)}/approve`, {}),
+    steer: ({ id, message }) => call<unknown>("POST", `/runs/${encodeURIComponent(id)}/steer`, { message }),
+    queueFollowup: ({ id, message }) =>
+      call<unknown>("POST", `/runs/${encodeURIComponent(id)}/queue`, { message }),
+    retry: (id) => call<unknown>("POST", `/runs/${encodeURIComponent(id)}/retry`, {}),
+    listEvents: (id) => call<unknown>("GET", `/runs/${encodeURIComponent(id)}/events`),
+    spend: () => call<unknown>("GET", "/spend"),
+    listRepos: () => call<unknown>("GET", "/repos"),
+    listPlugins: () => call<unknown>("GET", "/plugins"),
   };
 }
