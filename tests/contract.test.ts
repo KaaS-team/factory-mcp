@@ -25,7 +25,7 @@ const SAMPLES: Record<string, unknown[]> = {
   listEvents: ["ID"],
   spend: [],
   listRepos: [],
-  listPlugins: [],
+  getMetrics: [],
 };
 
 /** Calls the client makes today that match no server route. */
