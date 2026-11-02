@@ -1,0 +1,13 @@
+{
+  "source": "KaaS-team/KaaS-factory src/api/openapi.json at 1df7fd9fccf82818094f48bb92caab0b98245bf0",
+  "routes": [
+    { "method": "GET", "path": "/api/health" },
+    { "method": "GET", "path": "/api/repos" },
+    { "method": "GET", "path": "/api/runs" },
+    { "method": "GET", "path": "/api/runs/{repo}/{issue}" },
+    { "method": "GET", "path": "/api/runs/{repo}/{issue}/events" },
+    { "method": "GET", "path": "/api/spend" },
+    { "method": "GET", "path": "/api/metrics" },
+    { "method": "GET", "path": "/api/events" }
+  ]
+}
