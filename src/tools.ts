@@ -122,11 +122,11 @@ export const TOOLS: ToolDef[] = [
     call: (c) => c.listRepos(),
   },
   {
-    name: "list_plugins",
-    route: "plugins.list",
-    description: "List the plugins the factory reports. Read-only.",
+    name: "get_metrics",
+    route: "metrics.get",
+    description: "Read the factory metrics, exactly as the factory returns them. Read-only. A value the factory does not report is absent, never zero.",
     annotations: READ,
     input: {},
-    call: (c) => c.listPlugins(),
+    call: (c) => c.getMetrics(),
   },
 ];

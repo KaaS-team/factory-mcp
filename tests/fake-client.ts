@@ -63,6 +63,6 @@ export function fakeClient(): FactoryClient & { calls: string[] } {
     },
     async spend() { calls.push("spend"); return FAKE_SPEND; },
     async listRepos() { calls.push("repos"); return [{ name: "factory-mcp" }]; },
-    async listPlugins() { calls.push("plugins"); return [{ name: "example-plugin" }]; },
+    async getMetrics() { calls.push("metrics"); return { runs_total: 0 }; },
   };
 }

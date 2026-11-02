@@ -46,6 +46,6 @@ export interface FactoryClient {
   spend(): Promise<unknown>;
   /** repos.list */
   listRepos(): Promise<unknown>;
-  /** plugins.list */
-  listPlugins(): Promise<unknown>;
+  /** metrics.get */
+  getMetrics(): Promise<unknown>;
 }

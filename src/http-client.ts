@@ -31,6 +31,6 @@ export function createHttpClient(baseUrl: string, token: string, fetchImpl: Fetc
     listEvents: (id) => call<unknown>("GET", `/runs/${encodeURIComponent(id)}/events`),
     spend: () => call<unknown>("GET", "/spend"),
     listRepos: () => call<unknown>("GET", "/repos"),
-    listPlugins: () => call<unknown>("GET", "/plugins"),
+    getMetrics: () => call<unknown>("GET", "/api/metrics"),
   };
 }

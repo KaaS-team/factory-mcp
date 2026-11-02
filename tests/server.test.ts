@@ -28,7 +28,7 @@ const EXPECTED = {
   list_events: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
   spend: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
   list_repos: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
-  list_plugins: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+  get_metrics: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
 } as const;
 
 test("lists exactly the registered tools with the right annotations", async () => {
@@ -98,7 +98,7 @@ test("http client sends bearer token and maps routes (fake fetch)", async () => 
   await c.listEvents("r1");
   await c.spend();
   await c.listRepos();
-  await c.listPlugins();
+  await c.getMetrics();
   assert.deepEqual(seen.map((s) => [s.method, s.url, s.auth]), [
     ["GET", "http://x/tasks", "Bearer tok"],
     ["POST", "http://x/tasks/a%2Fb/hand-off", "Bearer tok"],
@@ -109,7 +109,7 @@ test("http client sends bearer token and maps routes (fake fetch)", async () => 
     ["GET", "http://x/runs/r1/events", "Bearer tok"],
     ["GET", "http://x/spend", "Bearer tok"],
     ["GET", "http://x/repos", "Bearer tok"],
-    ["GET", "http://x/plugins", "Bearer tok"],
+    ["GET", "http://x/api/metrics", "Bearer tok"],
   ]);
   const bad = createHttpClient("http://x", "t", async () => new Response("", { status: 500 }));
   await assert.rejects(bad.listTasks(), /500/);

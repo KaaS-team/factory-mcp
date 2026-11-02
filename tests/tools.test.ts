@@ -19,7 +19,7 @@ const CLASSIFICATION: Record<string, Kind> = {
   list_events: "read",
   spend: "read",
   list_repos: "read",
-  list_plugins: "read",
+  get_metrics: "read",
   create_task: "write",
   hand_off_task: "write",
   approve_plan: "write",
@@ -36,7 +36,7 @@ const ROUTES: Record<string, string> = {
   list_events: "runs.events",
   spend: "spend.get",
   list_repos: "repos.list",
-  list_plugins: "plugins.list",
+  get_metrics: "metrics.get",
 };
 
 /** read / write / destructive, derived from the annotations only. */
@@ -117,14 +117,14 @@ test("each new tool reaches the client with its arguments", async () => {
   await client.callTool({ name: "queue_followup", arguments: { id: "t1", message: "then docs" } });
   await client.callTool({ name: "retry", arguments: { id: "t1" } });
   await client.callTool({ name: "list_repos", arguments: {} });
-  await client.callTool({ name: "list_plugins", arguments: {} });
+  await client.callTool({ name: "get_metrics", arguments: {} });
   assert.deepEqual(fake.calls, [
     "approve:t1",
     "steer:t1:go left",
     "queue:t1:then docs",
     "retry:t1",
     "repos",
-    "plugins",
+    "metrics",
   ]);
 });
 
