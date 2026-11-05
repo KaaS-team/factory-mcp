@@ -1,0 +1,80 @@
+You are one of several agents working in parallel on KaaS-team/factory-mcp. Others are editing other parts of this repo right now, so stay inside your area.
+
+## Your job
+
+Base branch: `release/v0.1.0`. Start with `git fetch origin && git checkout -b cluster/mcp-v0.1-server origin/release/v0.1.0`. Then run `bun install --frozen-lockfile` if the repo has a `bun.lock` (or `npm ci` if it has a `package-lock.json`): the sandbox starts with no `node_modules`, and biome and tsc look like they pass without it. Finish every issue listed at the end of this brief on that one branch.
+
+Your file area: src/, tests/, bin/.
+Treat it as a starting point and read the code before you trust it. If an issue truly needs a file outside it, make the smallest edit you can there and name that file in your report.
+
+## Order of work, for each issue
+
+1. Check first whether the acceptance already holds on the base branch. If it does, change no code and record the evidence in your report.
+2. Write a test that fails, then the code that makes it pass.
+3. Run the test file, then `npm run check`.
+4. Commit with `git commit -s` (CI rejects a commit without a sign-off), one commit per issue, with the subject ending in `(#N)`. Then `git push -u origin cluster/mcp-v0.1-server`. Push after every issue, so a dropped session loses little.
+
+## Rules
+
+- Every acceptance line needs a test that fails when its behaviour is removed. A new check lands with its mutation file, `tests/mutations/<slug>.json`, and is reached by `make check`. Revert your fix once and watch the test fail before you claim it bites.
+- Do not edit `package.json`'s version, `CHANGELOG.md` or `template-ci/factory.yml.example`: the release does those.
+- Do not edit `.github/workflows/`: this cloud token cannot push there. Put the change in the staged copy under `ci/` and say so in your report; the supervisor moves it.
+- A repo hook refuses edits under `.factory/`, `.claude/`, `.agents/` and `.github/`. Never work around it. If an issue needs a change there, put the exact unified diff in your report under "Staged workflow changes" and the supervisor applies it.
+- Do not edit `scripts/kaas/`: those files are vendored from a shared kit and the next sync overwrites any edit. If an issue seems to need it, design around it or record it as blocked.
+- Do not run the whole `bun test tests/` in the foreground: it takes over two minutes and passes the tool's 120s limit. Run the test files you touched. `tests/lean-resources.test.ts` can fail on memory under load; retry it alone before you blame your change.
+- Keep `AGENTS.md`'s "things that change together" in step when you touch one of those pairs.
+- Never run `make agent-matrix`. Never run the `factory` watcher against a real repo. No real tokens or model calls in tests.
+- Do not comment on, label or close any issue, and do not open a PR. The supervisor does that.
+- Never force-push, push to `main`, or push to any branch but `cluster/mcp-v0.1-server` and the report branch below.
+- No session URL, `claude.ai` link or `Claude-Session:` trailer in any commit message or file.
+- This repo is public. Name no competitor, research source or customer. No model name, token count or cost in any customer-facing output.
+- No em dashes in prose. Plain sentences. Never write a claim the code does not do.
+- If one issue is blocked, record why and move on to the next. Do not stop the session for it, and do not widen scope to get around it.
+
+## When you finish
+
+Write the report below to a file outside the repo, then push it with these commands, because the supervisor's log cuts long messages short:
+
+```
+b=$(git hash-object -w /tmp/report.md); t=$(printf '100644 blob %s\treport.md\n' "$b" | git mktree); c=$(git commit-tree "$t" -m report); git push origin "$c:refs/heads/report/mcp-v0.1-server"
+```
+
+Your final message is then that same report, exactly:
+
+```
+BRANCH: cluster/mcp-v0.1-server
+HEAD: <full sha you pushed, checked with git ls-remote>
+## Summary
+<one or two sentences>
+## Issues
+- #N: done | already held | blocked. Each acceptance line -> the test name -> the mutation file. Blocked: why.
+## Staged workflow changes
+<each file under ci/ the supervisor must move, or none>
+## Files outside my area
+<each, with why, or none>
+## Gate evidence
+<last gate output line, verbatim>
+## Risk and rollback
+<risk, how to roll back>
+## Learnings
+<every thing that cost you time or would have collided with another agent: a slow command, a wrong assumption in this brief, a missing tool, a conflict-prone file, a flaky test. One line each, with the command or path. Say what the factory's defaults should do instead.>
+```
+
+## Issues
+
+### #1 E7 factory-mcp
+
+## Problem
+
+An agent or IDE that wants to drive the factory talks to a hand-written server inside the runner with four tools. It cannot run without the factory checkout, cannot speak HTTP and does not see runs, events or spend.
+
+## Acceptance
+
+- `factory-mcp` runs as a standalone package on the official MCP SDK over stdio and streamable HTTP.
+- It offers ten tools, including runs, events and spend, built only on the protocol client.
+- It reads what the TUI and the plane read and cannot reach factory internals.
+- A test drives each tool against a fake protocol server.
+
+## Out of scope
+
+- New tools beyond the ten.
