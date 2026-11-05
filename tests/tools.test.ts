@@ -7,75 +7,25 @@ import { builtinModules } from "node:module";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { buildServer } from "../src/server.js";
-import { TOOLS, type ToolDef } from "../src/tools.js";
+import { TOOLS } from "../src/tools.js";
 import { FAKE_SPEND, fakeClient } from "./fake-client.js";
 
-type Kind = "read" | "write";
+/** The exact tool list this release ships. approve_plan, steer and retry follow. */
+const SHIPPED = ["get_metrics", "get_run", "list_events", "list_repos", "list_runs", "spend", "watch_events"];
 
-/** Every tool must appear here. A tool missing from this table fails the test below. */
-const CLASSIFICATION: Record<string, Kind> = {
-  list_tasks: "read",
-  get_task: "read",
-  list_events: "read",
-  spend: "read",
-  list_repos: "read",
-  get_metrics: "read",
-  create_task: "write",
-  hand_off_task: "write",
-  approve_plan: "write",
-  steer: "write",
-  queue_followup: "write",
-  retry: "write",
-};
-
-const ROUTES: Record<string, string> = {
-  approve_plan: "runs.approve",
-  steer: "runs.steer",
-  queue_followup: "runs.queue",
-  retry: "runs.retry",
-  list_events: "runs.events",
-  spend: "spend.get",
-  list_repos: "repos.list",
-  get_metrics: "metrics.get",
-};
-
-/** read / write / destructive, derived from the annotations only. */
-function classify(t: ToolDef): "read" | "write" | "destructive" {
-  const a = t.annotations;
-  assert.equal(typeof a.readOnlyHint, "boolean", `${t.name}.readOnlyHint is declared`);
-  assert.equal(typeof a.destructiveHint, "boolean", `${t.name}.destructiveHint is declared`);
-  assert.ok(!(a.readOnlyHint && a.destructiveHint), `${t.name} cannot be both read-only and destructive`);
-  if (a.readOnlyHint) return "read";
-  return a.destructiveHint ? "destructive" : "write";
-}
-
-test("every tool in TOOLS is classified, and has a unique name and route", () => {
-  const names = TOOLS.map((t) => t.name);
-  assert.equal(new Set(names).size, names.length, "unique names");
-  assert.deepEqual([...names].sort(), Object.keys(CLASSIFICATION).sort(), "tool set equals classified set");
+test("the shipped tool list is exactly the seven read tools", () => {
+  assert.deepEqual(TOOLS.map((t) => t.name).sort(), SHIPPED);
   assert.equal(new Set(TOOLS.map((t) => t.route)).size, TOOLS.length, "unique routes");
-  for (const t of TOOLS) classify(t);
 });
 
-test("list_*, get_*, spend are read-only; the rest are writes", () => {
+test("every tool is read-only and closed-world", () => {
   for (const t of TOOLS) {
-    const kind = classify(t);
-    if (/^(list_|get_)/.test(t.name) || t.name === "spend") {
-      assert.equal(kind, "read", t.name);
-    } else {
-      assert.notEqual(kind, "read", `${t.name} must not be read-only`);
-      assert.equal(t.annotations.readOnlyHint, false, t.name);
-    }
-    assert.equal(CLASSIFICATION[t.name] === "read", kind === "read", `${t.name} matches table`);
-  }
-  for (const n of ["retry", "steer", "approve_plan", "hand_off_task", "create_task", "queue_followup"]) {
-    assert.equal(TOOLS.find((t) => t.name === n)?.annotations.readOnlyHint, false, n);
-  }
-});
-
-test("new tools map to their route ids", () => {
-  for (const [name, route] of Object.entries(ROUTES)) {
-    assert.equal(TOOLS.find((t) => t.name === name)?.route, route, name);
+    assert.deepEqual(t.annotations, {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    }, t.name);
   }
 });
 
@@ -110,30 +60,26 @@ async function connect() {
 
 const text = (r: object) => ((r as { content: { text: string }[] }).content)[0]!.text;
 
-test("each new tool reaches the client with its arguments", async () => {
+test("each tool reaches the client with its arguments", async () => {
   const { client, fake } = await connect();
-  await client.callTool({ name: "approve_plan", arguments: { id: "t1" } });
-  await client.callTool({ name: "steer", arguments: { id: "t1", message: "go left" } });
-  await client.callTool({ name: "queue_followup", arguments: { id: "t1", message: "then docs" } });
-  await client.callTool({ name: "retry", arguments: { id: "t1" } });
   await client.callTool({ name: "list_repos", arguments: {} });
+  await client.callTool({ name: "list_runs", arguments: {} });
+  await client.callTool({ name: "get_run", arguments: { repo: "factory-mcp", issue: "1" } });
+  await client.callTool({ name: "list_events", arguments: { repo: "factory-mcp", issue: "1" } });
+  await client.callTool({ name: "spend", arguments: {} });
   await client.callTool({ name: "get_metrics", arguments: {} });
+  await client.callTool({ name: "watch_events", arguments: { seconds: 2, max_events: 5 } });
+  await client.callTool({ name: "watch_events", arguments: {} });
   assert.deepEqual(fake.calls, [
-    "approve:t1",
-    "steer:t1:go left",
-    "queue:t1:then docs",
-    "retry:t1",
     "repos",
+    "runs",
+    "run:factory-mcp:1",
+    "events:factory-mcp:1",
+    "spend",
     "metrics",
+    "watch:2:5",
+    "watch:5:100",
   ]);
-});
-
-test("write tools are visible through list_events", async () => {
-  const { client } = await connect();
-  await client.callTool({ name: "steer", arguments: { id: "t1", message: "go left" } });
-  await client.callTool({ name: "queue_followup", arguments: { id: "t1", message: "then docs" } });
-  const events = JSON.parse(text(await client.callTool({ name: "list_events", arguments: { id: "t1" } })));
-  assert.deepEqual(events.map((e: { kind: string }) => e.kind), ["steer", "queued"]);
 });
 
 test("spend returns the route body unchanged", async () => {
@@ -144,12 +90,14 @@ test("spend returns the route body unchanged", async () => {
   assert.doesNotMatch(tool.description, /\$|model/i);
 });
 
-test("new tools reject missing arguments and surface client errors", async () => {
+test("tools reject bad arguments and surface client errors", async () => {
   const { client } = await connect();
-  const missing = await client.callTool({ name: "steer", arguments: { id: "t1" } }).catch((e) => e);
+  const missing = await client.callTool({ name: "get_run", arguments: { repo: "factory-mcp" } }).catch((e) => e);
   assert.ok(missing instanceof Error || (missing as { isError?: boolean }).isError);
-  for (const name of ["approve_plan", "retry", "list_events"]) {
-    const res = await client.callTool({ name, arguments: { id: "nope" } });
+  const tooLong = await client.callTool({ name: "watch_events", arguments: { seconds: 999 } }).catch((e) => e);
+  assert.ok(tooLong instanceof Error || (tooLong as { isError?: boolean }).isError);
+  for (const name of ["get_run", "list_events"]) {
+    const res = await client.callTool({ name, arguments: { repo: "x", issue: "9" } });
     assert.equal(res.isError, true, name);
   }
 });

@@ -1,26 +1,16 @@
 /** Small interface to the factory. Injected into the server; faked in tests. */
-export interface Task {
-  id: string;
-  title: string;
-  status: string;
-  assignee?: string;
+
+/** A run is addressed the way the factory addresses it: repo and issue. */
+export interface RunRef {
+  repo: string;
+  issue: string;
 }
 
-export interface CreateTaskInput {
-  title: string;
-  body?: string;
-}
-
-export interface HandOffInput {
-  id: string;
-  to: string;
-  note?: string;
-}
-
-/** Message aimed at a run (steer or queue). */
-export interface RunMessageInput {
-  id: string;
-  message: string;
+export interface WatchInput {
+  /** How long to listen, in seconds. */
+  seconds: number;
+  /** Stop early after this many events. */
+  maxEvents: number;
 }
 
 /**
@@ -28,24 +18,18 @@ export interface RunMessageInput {
  * them; the client does not reshape them.
  */
 export interface FactoryClient {
-  listTasks(): Promise<Task[]>;
-  getTask(id: string): Promise<Task>;
-  createTask(input: CreateTaskInput): Promise<Task>;
-  handOffTask(input: HandOffInput): Promise<Task>;
-  /** runs.approve */
-  approvePlan(id: string): Promise<unknown>;
-  /** runs.steer */
-  steer(input: RunMessageInput): Promise<unknown>;
-  /** runs.queue */
-  queueFollowup(input: RunMessageInput): Promise<unknown>;
-  /** runs.retry */
-  retry(id: string): Promise<unknown>;
-  /** runs.events */
-  listEvents(id: string): Promise<unknown>;
-  /** spend.get */
-  spend(): Promise<unknown>;
-  /** repos.list */
+  /** GET /api/repos */
   listRepos(): Promise<unknown>;
-  /** metrics.get */
+  /** GET /api/runs */
+  listRuns(): Promise<unknown>;
+  /** GET /api/runs/{repo}/{issue} */
+  getRun(ref: RunRef): Promise<unknown>;
+  /** GET /api/runs/{repo}/{issue}/events */
+  listEvents(ref: RunRef): Promise<unknown>;
+  /** GET /api/spend */
+  spend(): Promise<unknown>;
+  /** GET /api/metrics */
   getMetrics(): Promise<unknown>;
+  /** GET /api/events, read for a bounded time; returns the events that arrived. */
+  watchEvents(input: WatchInput): Promise<unknown[]>;
 }
