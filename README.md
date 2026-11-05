@@ -1,12 +1,12 @@
 # factory-mcp
 
-An MCP server that will let any MCP client list, start and watch KaaS Factory runs.
+An MCP server that lets any MCP client list and watch KaaS Factory runs.
 
-**Status: in development.** The repo holds the licence and this note. Nothing here is published or installable yet.
+**Status: in development.** Seven read tools work today: `list_repos`, `list_runs`, `get_run`, `list_events`, `spend`, `get_metrics` and `watch_events`. Nothing is published to npm yet.
 
-## What it will be
+## What it is
 
-A thin server over the factory's API: list tasks, read a run, approve a gate. It starts after the factory API and SDK land.
+A thin server over the factory's HTTP API, over stdio or streamable HTTP. It only calls routes the factory serves. `approve_plan`, `steer` and `retry` follow once the factory has write routes for them.
 
 ## Part of KaaS
 
