@@ -1,5 +1,15 @@
 You are one of several agents working in parallel on KaaS-team/factory-mcp. Others are editing other parts of this repo right now, so stay inside your area.
 
+## Supervisor decision, this overrides the brief where they differ
+
+An earlier run stopped to ask which tools to keep. The answer: this run ships the seven read tools that a real factory route backs, from `tests/fixtures/factory-routes.json`: `list_repos`, `list_runs`, `get_run`, `list_events`, `spend`, `get_metrics`, and `watch_events`, which reads `/api/events` for a bounded time and returns what arrived. The other three of the ten are `approve_plan`, `steer` and `retry`. They need new factory routes that the supervisor is building, and a follow-up adds them.
+
+Rename or rewrite the existing tools and client calls to those routes. Delete `create_task`, `hand_off_task`, `approve_plan`, `steer`, `queue_followup` and `retry` for now: no route backs them, so they fail at runtime today. There are no users to keep compatible. Delete `KNOWN_DRIFT` from `tests/contract.test.ts` so every client call must match a route. Add a test that pins the exact tool list.
+
+Add a test that starts a real local HTTP server serving those routes with canned JSON, and drives every tool through the real HTTP client and the MCP server. Do not claim ten in this run: say in your report that seven ship and that three follow.
+
+This repo has no bun, make, biome or `--rerun-each`. Install with `npm ci`, and the gate is `npm run check`. It has no `tests/mutations`: prove each test bites by reverting the fix once, and say so in your report.
+
 ## Your job
 
 Base branch: `release/v0.1.0`. Start with `git fetch origin && git checkout -b cluster/mcp-v0.1-server origin/release/v0.1.0`. Then run `bun install --frozen-lockfile` if the repo has a `bun.lock` (or `npm ci` if it has a `package-lock.json`): the sandbox starts with no `node_modules`, and biome and tsc look like they pass without it. Finish every issue listed at the end of this brief on that one branch.
