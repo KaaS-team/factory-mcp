@@ -44,8 +44,8 @@ test("http: with the token, tools/list answers every tool and a tool call works"
     );
     const { tools } = await client.listTools();
     assert.deepEqual(tools.map((t) => t.name).sort(), TOOLS.map((t) => t.name).sort());
-    const res = await client.callTool({ name: "list_tasks", arguments: {} });
-    assert.match(JSON.stringify(res.content), /first/);
+    const res = await client.callTool({ name: "list_runs", arguments: {} });
+    assert.match(JSON.stringify(res.content), /running/);
   } finally {
     await client.close();
     await h.close();
