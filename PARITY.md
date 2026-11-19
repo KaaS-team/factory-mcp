@@ -1,7 +1,7 @@
 # Parity with the Go factory
 
 factory-mcp is archived. The Go factory replaces it. Paths below are in
-[KaaS-team/KaaS-factory](https://github.com/KaaS-team/KaaS-factory) branch `next`
+[KaaS-team/factory](https://github.com/KaaS-team/factory) branch `next`
 (checked at `ad206c6`; the repo is moving to KaaS-team/factory).
 
 Verdicts: **covered**, **dropped on purpose**, **missing**.
